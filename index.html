@@ -62,7 +62,7 @@
 
         <!-- Barre supérieure -->
         <div class="flex justify-end items-center w-full max-w-md mx-auto pt-2">
-            <button id="receive-btn" class="pointer-events-auto px-4 py-2 rounded-full text-xs font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/15 text-white active:scale-95 transition-all">
+            <button id="receive-btn" class="pointer-events-auto px-4 py-2 rounded-full text-xs font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/15 text-white active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none">
                 Recevoir un message
             </button>
         </div>
@@ -210,8 +210,9 @@
         }
         animate();
 
-        // --- LOGIQUE À SENS UNIQUE (ENVOI DANS LE VIDE / RÉCEPTION ALÉATOIRE) ---
-        const STORAGE_KEY = "space_oneway_messages_v1";
+        // --- LOGIQUE À SENS UNIQUE (CONSOMMATION UNIQUE APRÈS LECTURE) ---
+        const STORAGE_KEY = "space_oneway_messages_v2";
+        const SEEDED_KEY = "space_oneway_seeded_v2";
         const feedContainer = document.getElementById('feed-container');
         const sendForm = document.getElementById('send-form');
         const messageInput = document.getElementById('message-input');
@@ -223,24 +224,41 @@
             "Une phrase lancée au hasard dans le noir."
         ];
 
+        function initPoolIfNeeded() {
+            try {
+                if (!localStorage.getItem(SEEDED_KEY)) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MESSAGES));
+                    localStorage.setItem(SEEDED_KEY, "1");
+                }
+            } catch (_) {}
+        }
+
         function getStoredMessages() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
                 const parsed = raw ? JSON.parse(raw) : [];
-                return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_MESSAGES;
+                return Array.isArray(parsed) ? parsed : [];
             } catch (_) {
-                return INITIAL_MESSAGES;
+                return [];
             }
         }
 
-        function saveMessage(text) {
+        function setStoredMessages(list) {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                const list = raw ? JSON.parse(raw) : [];
-                const updated = Array.isArray(list) ? list : [];
-                updated.push(text);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
             } catch (_) {}
+        }
+
+        function saveMessage(text) {
+            const updated = getStoredMessages();
+            updated.push(text);
+            setStoredMessages(updated);
+            syncReceiveButton();
+        }
+
+        function syncReceiveButton() {
+            const remaining = getStoredMessages().length;
+            receiveBtn.disabled = remaining === 0;
         }
 
         function addReceivedBubble(text) {
@@ -259,10 +277,17 @@
             feedContainer.scrollTop = feedContainer.scrollHeight;
         }
 
-        function receiveRandomMessage() {
+        function popAndDisplayRandomMessage() {
             const pool = getStoredMessages();
+            if (pool.length === 0) {
+                syncReceiveButton();
+                return;
+            }
             const randomIndex = Math.floor(Math.random() * pool.length);
-            addReceivedBubble(pool[randomIndex]);
+            const [pickedMessage] = pool.splice(randomIndex, 1);
+            setStoredMessages(pool);
+            addReceivedBubble(pickedMessage);
+            syncReceiveButton();
         }
 
         sendForm.addEventListener('submit', (e) => {
@@ -275,10 +300,10 @@
             addSentNotice();
         });
 
-        receiveBtn.addEventListener('click', receiveRandomMessage);
+        receiveBtn.addEventListener('click', popAndDisplayRandomMessage);
 
-        // Affiche un premier message aléatoire à l'ouverture
-        receiveRandomMessage();
+        initPoolIfNeeded();
+        popAndDisplayRandomMessage();
     </script>
 </body>
 </html>
