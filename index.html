@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chat 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-black text-white overflow-hidden select-none touch-none">
+
+    <!-- Canvas 3D -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Interface Superposée -->
+    <div class="relative z-10 flex flex-col h-[100dvh] justify-between p-4 pointer-events-none">
+        
+        <!-- En-tête / Statut -->
+        <div class="flex justify-between items-center w-full max-w-md mx-auto pt-2">
+            <div id="status-badge" class="px-3 py-1 rounded-full text-xs font-medium tracking-wide bg-white/10 backdrop-blur-md border border-white/10 text-white/70">
+                Hors ligne
+            </div>
+            <button id="action-btn" class="pointer-events-auto px-4 py-2 rounded-full text-xs font-semibold bg-white text-black active:scale-95 transition-transform shadow-lg">
+                Se connecter
+            </button>
+        </div>
+
+        <!-- Zone de Chat 3D UI (Incrustée ou Overlay discret) -->
+        <div class="w-full max-w-md mx-auto flex flex-col gap-3 pb-2">
+            
+            <!-- Zone d'affichage des messages -->
+            <div id="messages-container" class="h-64 overflow-y-auto flex flex-col gap-2 p-3 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto scrollbar-none">
+                <!-- Les messages s'affichent ici -->
+            </div>
+
+            <!-- Formulaire d'envoi -->
+            <form id="chat-form" class="flex gap-2 pointer-events-auto">
+                <input type="text" id="message-input" placeholder="Écrire un message..." autocomplete="off" disabled
+                    class="flex-1 bg-white/10 border border-white/15 rounded-full px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/40 disabled:opacity-40 transition-all">
+                <button type="submit" id="send-btn" disabled
+                    class="bg-white text-black px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-40 active:scale-95 transition-transform">
+                    Envoyer
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
